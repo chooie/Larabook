@@ -11,9 +11,10 @@ class FunctionalHelper extends \Codeception\Module
 	public function signIn()
 	{
 		$email = "foo@example.com";
+		$username = "Foobar";
 		$password = "foo";
 
-		$this->haveAnAccount(compact('email', 'password'));
+		$this->haveAnAccount(compact('email','username', 'password'));
 
 		$I = $this->getModule('Laravel4');
 
@@ -23,10 +24,23 @@ class FunctionalHelper extends \Codeception\Module
 		$I->click('Sign In');
 	}
 
+	public function have($model, $overrides = [])
+	{
+		return TestDummy::create($model, $overrides);
+	}
+
+	public function postAStatus($body)
+	{
+		$I = $this->getModule('Laravel4');
+
+		$I->fillField('body', $body);
+		$I->click('Post Status');
+		// return $this->have('Larabook\Statuses\Status', $overrides);
+	}
+
 	public function haveAnAccount($overrides = [])
 	{
-		TestDummy::setFixtures(app_path('tests'));
 		
-		TestDummy::create('Larabook\Users\User', $overrides);
+		return $this->have('Larabook\Users\User', $overrides);
 	}
 }

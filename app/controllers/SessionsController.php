@@ -4,9 +4,15 @@ use Larabook\Forms\SignInForm;
 
 class SessionsController extends \BaseController {
 
-	private $signInForm;
+    /**
+     * @var SignInForm
+     */
+    private $signInForm;
 
-	function __construct(SignInForm $signInForm)
+    /**
+     * @param SignInForm $signInForm
+     */
+    function __construct(SignInForm $signInForm)
 	{
 		$this->signInForm = $signInForm;
 		$this->beforeFilter('guest', ['except' => 'destroy']);
@@ -35,12 +41,15 @@ class SessionsController extends \BaseController {
 		$this->signInForm->validate($input);
 		// if invalid, then go back
 		// if is valid, then try to sign in
-		if (Auth::attempt($input))
+		if ( ! Auth::attempt($input))
 		{
-			Flash::message('Welcome back!');
-			// redirect to statuses
-			return Redirect::intended('statuses');
+			Flash::message('We were unable to sign you in. Please check your credentials and try again!');
+
+			return Redirect::back()->withInput();
 		}
+		Flash::message('Welcome back!');
+		// redirect to statuses
+		return Redirect::intended('statuses');
 	}
 
 	/**

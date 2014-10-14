@@ -6,11 +6,12 @@ use Illuminate\Auth\Reminders\RemindableTrait;
 use Illuminate\Auth\Reminders\RemindableInterface;
 use Eloquent, Hash;
 use Laracasts\Commander\Events\EventGenerator;
-use Larabook\Registration\Events\UserRegistered;
+use Larabook\Registration\Events\UserHasRegistered;
+use Laracasts\Presenter\PresentableTrait;
 
 class User extends Eloquent implements UserInterface, RemindableInterface {
 
-	use UserTrait, RemindableTrait, EventGenerator;
+	use UserTrait, RemindableTrait, EventGenerator, PresentableTrait, FollowableTrait;
 
 	/**
 	 * Which fields may be mass-assigned.
@@ -25,6 +26,13 @@ class User extends Eloquent implements UserInterface, RemindableInterface {
 	protected $table = 'users';
 
 	/**
+	 * Path to the presenter for a user.
+     *
+	 * @var string
+	 */
+	protected $presenter = 'Larabook\Users\UserPresenter';
+
+	/**
 	 * The attributes excluded from the model's JSON form.
 	 *
 	 * @var array
@@ -32,7 +40,8 @@ class User extends Eloquent implements UserInterface, RemindableInterface {
 	protected $hidden = array('password', 'remember_token');
 
 	/**
-	 * Passwords must always be hashed
+	 * Passwords must always be hashed.
+     *
 	 * @param $password
 	 */
 	public function setPasswordAttribute($password)
@@ -41,7 +50,18 @@ class User extends Eloquent implements UserInterface, RemindableInterface {
 	}
 
 	/**
-	 * Register a new user
+	 * A user has many statuses.
+     *
+	 * @return mixed
+	 */
+	public function statuses()
+	{
+		return $this->hasMany('Larabook\Statuses\Status')->latest();
+	}
+
+	/**
+	 * Register a new user.
+     *
 	 * @param $username
 	 * @param $email
 	 * @param $password
@@ -52,9 +72,31 @@ class User extends Eloquent implements UserInterface, RemindableInterface {
 		$user = new static(compact('username', 'email', 'password'));
 
 		// raise an event
-		$user->raise(new UserRegistered($user));
+		$user->raise(new UserHasRegistered($user));
 
 		return $user;
 	}
+
+	/**
+	 * Determine if the given user is the same as the current
+	 * one.
+     *
+	 * @param  $user
+	 * @return boolean
+	 */
+	public function is($user)
+	{
+		if (is_null($user)) return false;
+
+		return $this->username == $user->username;
+	}
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function comments()
+    {
+        return $this->hasMany('Larabook\Statuses\Comment');
+    }
 
 }
